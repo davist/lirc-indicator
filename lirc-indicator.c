@@ -142,7 +142,7 @@ void setValue(int pin, int value) {
 void flash(int pin) {
 
   setValue(pin, 1);
-  usleep(200000);
+  usleep(100000);
   setValue(pin, 0);
 }
 
@@ -278,6 +278,12 @@ int main(int argc,char *argv[])
 
             if (!i) cleanup(0);
 
-            flash(gpio_pin);
+            // ignore button up events
+            if (!strstr(buf, "_UP ")) {
+              flash(gpio_pin);
+            }
+
+            // ignore anything that came in while doing the flash
+            lseek(lirc_fd, 0, SEEK_END);
       };
 }
