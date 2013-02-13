@@ -161,7 +161,7 @@ int main(int argc,char *argv[])
       int c;
       char *progname;
       struct sigaction sigIntHandler;
-      int isDaemon = 0;
+      int runAsDaemon = 0;
 
       progname="lirc-indicator v0.1";
 
@@ -187,7 +187,7 @@ int main(int argc,char *argv[])
                         argv[0]);
                   return(EXIT_FAILURE);
             case 'd':
-                  isDaemon = 1;
+                  runAsDaemon = 1;
                   break;
             }
       }
@@ -248,20 +248,6 @@ int main(int argc,char *argv[])
             return(EXIT_FAILURE);
       }
 
-      if (isDaemon) {
-        // run as daemon - fork into background
-        pid_t pid;
-        pid = fork();
-        if (pid < 0) {
-          return(EXIT_FAILURE);
-        }
-        /* If we got a good PID, then
-           we can exit the parent process. */
-        if (pid > 0) {
-          return(EXIT_SUCCESS);
-        }
-      }
-
 
       // catch SIGINT and clean up
       sigIntHandler.sa_handler = onExit;
@@ -286,6 +272,12 @@ int main(int argc,char *argv[])
       isExported = 1;
 
       setAsOutput(gpio_pin);
+
+
+      if (runAsDaemon) {
+        // run as daemon - fork into background
+        daemon(0, 0);
+      }
 
 
       // wait for input and flash the LED
