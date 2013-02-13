@@ -31,6 +31,7 @@ static struct option long_options[] =
 {
       {"help", no_argument, NULL, 'h'},
       {"version", no_argument, NULL, 'v'},
+      {"daemon", no_argument, NULL, 'd'},
       {0, 0, 0, 0}
 };
 
@@ -160,17 +161,19 @@ int main(int argc,char *argv[])
       int c;
       char *progname;
       struct sigaction sigIntHandler;
+      int isDaemon = 0;
 
       progname="lirc-indicator v0.1";
 
       addr.sun_family = AF_UNIX;
 
-      while ((c = getopt_long(argc, argv, "hv", long_options, NULL))
+      while ((c = getopt_long(argc, argv, "hvd", long_options, NULL))
              != EOF) {
             switch (c){
             case 'h':
                   printf("Pulses the GPIO output pin (eg to flash an LED) whenever anything is received on the lirc socket\n\n");
                   printf("Usage: %s [gpio pin] [lirc socket]\n",argv[0]);
+                  printf("\t -d --daemon \t\trun as daemon in background\n");
                   printf("\t -h --help \t\tdisplay usage summary\n");
                   printf("\t -v --version \t\tdisplay version\n");
                   return(EXIT_SUCCESS);
@@ -183,6 +186,9 @@ int main(int argc,char *argv[])
                         "information.\n",
                         argv[0]);
                   return(EXIT_FAILURE);
+            case 'd':
+                  isDaemon = 1;
+                  break;
             }
       }
       if(argc == optind){
@@ -241,6 +247,21 @@ int main(int argc,char *argv[])
                   argv[0], gpio_pin);
             return(EXIT_FAILURE);
       }
+
+      if (isDaemon) {
+        // run as daemon - fork into background
+        pid_t pid;
+        pid = fork();
+        if (pid < 0) {
+          return(EXIT_FAILURE);
+        }
+        /* If we got a good PID, then
+           we can exit the parent process. */
+        if (pid > 0) {
+          return(EXIT_SUCCESS);
+        }
+      }
+
 
       // catch SIGINT and clean up
       sigIntHandler.sa_handler = onExit;
